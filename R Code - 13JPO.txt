@@ -1,0 +1,43 @@
+### Instalando e carregando o pacote que contem o data set desejado:
+install.packages("TH.data",  dependencies=TRUE)
+library("TH.data")
+
+### Leitura do data set:
+dados <- data.frame(GlaucomaM)
+head(dados)
+tail(dados)
+dim(dados)
+
+### Analise exploratoria:
+summary(dados)
+
+dados$Class_new <- ifelse(dados$Class=="glaucoma", 1, 0)
+table(dados$Class_new)
+prop.table(table(dados$Class_new))*100
+
+### Divisao em treinamento (70%) e teste (30%):
+library("caret")
+indice.treino <- createDataPartition(y=dados$Class_new, p=0.7, list=FALSE)
+treino <- dados[indice.treino, ]
+teste <- dados[-indice.treino, ]
+
+### Identificando valores ausentes (missings):
+sapply(treino, function(x) sum(is.na(x)))
+
+### Ajuste do modelo de regressao logistica (binaria):
+modelo <- glm (Class_new ~ emd+mv, data = treino, family = binomial(link = "logit"))
+summary(modelo)
+
+### Calculo das odds ratio:
+# odds.ratio <- exp(modelo$coefficients)
+# odds.ratio
+
+### Desempenho preditivo (teste):
+pred.Teste <- predict(modelo, teste, type = "response")
+mc <- table(teste$Class_new, pred.Teste > 0.5)		# matriz de confusao
+mc
+VN <- mc[1,1]; FP <- mc[2,1]; FN <- mc[1,2]; VP <- mc[2,2]
+ACC=(VP+VN)/(VP+VN+FN+FP)
+SEN=VP/(VP+FN)
+ESP=VN/(VN+FP)
+ACC; SEN; ESP
